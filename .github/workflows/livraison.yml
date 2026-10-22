@@ -1,0 +1,39 @@
+name: Livraison continue
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v7
+
+      - name: Vérifier que la page d'accueil existe
+        run: test -f index.html
+
+      - name: Vérifier que la page a un titre
+        run: grep "<h1>" index.html
+
+construire:
+  needs: verifier
+  runs-on: ubuntu-latest
+  steps:
+    - name: Récupérer le code
+      uses: actions/checkout@v7
+
+    - name: Préparer le site
+      run: |
+        mkdir -p _site
+        cp *.html _site/
+        echo "Version ${{ github.sha }} construite le $(date)" > _site/version.txt
+        ls -l _site
+
+    - name: Livrer l'artefact
+      uses: actions/upload-artifact@v7
+      with:
+        name: site-web
+        path: _site/
